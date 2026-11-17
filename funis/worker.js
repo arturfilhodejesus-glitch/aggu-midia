@@ -47,10 +47,20 @@ async function graph(env, path, body) {
   });
   const txt = await r.text();
   if (!r.ok) console.log("graph erro", path, r.status, txt);
+  await registrar(env, { tipo: "envio", path: path.split("/").pop(), ok: r.ok, status: r.status, erro: r.ok ? undefined : txt.slice(0, 300) });
   return { ok: r.ok, txt };
 }
 
 const enviar = (env, recipient, message) => graph(env, `${env.IG_ID || "me"}/messages`, { recipient, message });
+
+// Registro curto dos últimos eventos (para conferir de fora em /status?k=VERIFY_TOKEN).
+async function registrar(env, item) {
+  try {
+    const v = JSON.parse((await env.FUNIL.get("log")) || "[]");
+    v.unshift({ t: new Date().toISOString(), ...item });
+    await env.FUNIL.put("log", JSON.stringify(v.slice(0, 60)));
+  } catch (e) { console.log("log falhou", e); }
+}
 
 async function estado(env, uid) { const v = await env.FUNIL.get(`u:${uid}`); return v ? JSON.parse(v) : null; }
 async function salvar(env, uid, st) { await env.FUNIL.put(`u:${uid}`, JSON.stringify(st), { expirationTtl: 60 * 60 * 24 * 8 }); }
@@ -113,6 +123,10 @@ async function assinaturaOk(env, req, corpo) {
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    if (req.method === "GET" && url.pathname === "/status") {
+      if (!env.VERIFY_TOKEN || url.searchParams.get("k") !== env.VERIFY_TOKEN) return new Response("não", { status: 403 });
+      return new Response((await env.FUNIL.get("log")) || "[]", { headers: { "content-type": "application/json; charset=utf-8" } });
+    }
     if (req.method === "GET") {
       if (url.searchParams.get("hub.mode") === "subscribe" && url.searchParams.get("hub.verify_token") === env.VERIFY_TOKEN)
         return new Response(url.searchParams.get("hub.challenge") || "");
@@ -123,6 +137,11 @@ export default {
     if (!(await assinaturaOk(env, req, corpo))) return new Response("assinatura inválida", { status: 401 });
     let j; try { j = JSON.parse(corpo); } catch { return new Response("ok"); }
     const tarefas = [];
+    for (const e of j.entry || []) {
+      for (const c of e.changes || []) tarefas.push(registrar(env, { tipo: "recebido", campo: c.field, de: c.value && c.value.from && c.value.from.username, texto: ((c.value && c.value.text) || "").slice(0, 80), media: c.value && c.value.media && c.value.media.id }));
+      for (const m of e.messaging || []) tarefas.push(registrar(env, { tipo: "recebido", campo: "messages", de: m.sender && m.sender.id, eco: !!(m.message && m.message.is_echo), texto: ((m.message && m.message.text) || "").slice(0, 80) }));
+    }
+    await Promise.allSettled(tarefas.splice(0));
     for (const e of j.entry || []) {
       for (const c of e.changes || []) if (c.field === "comments" && c.value) tarefas.push(comentario(env, c.value));
       for (const m of e.messaging || []) tarefas.push(mensagem(env, m));
