@@ -1,0 +1,14 @@
+{
+  "_leia": "Funis de link ativos do @agguoficial. O robô (Cloudflare Worker) lê este arquivo a cada minuto. Só entra aqui o que o Artur indicou ou o que o chat dos vídeos deixou em resposta-comentario.md.",
+  "funis": [
+    {
+      "media_id": "18128062501909480",
+      "post": "https://www.instagram.com/reel/Df22E0cjIq7/",
+      "assunto": "da calculadora do IBS e da CBS",
+      "palavras": ["calculadora", "calculadoras", "calculdora", "calcualdora"],
+      "mensagem_link": "Valeu por seguir! Aqui a calculadora oficial do IBS e da CBS, da Receita. Abre direto no navegador:\nhttps://piloto-cbs.tributos.gov.br/servico/calculadora-consumo/calculadora\n\nEscolhe Simples Nacional ou regime regular, coloca o produto ou serviço e o valor, e ela mostra a conta e a lei usada.\n\nSe o sistema de nota é de um fornecedor, vale mandar pra ele a notícia do código aberto:\nhttps://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/novembro/receita-federal-publica-primeiro-codigo-fonte-aberto-no-github-e-amplia-transparencia-da-reforma-tributaria\n\nA simulação não substitui a conferência do seu contador. Qualquer dúvida, me chama aqui 🙂",
+      "ativo": true,
+      "desde": "2026-11-17"
+    }
+  ]
+}
